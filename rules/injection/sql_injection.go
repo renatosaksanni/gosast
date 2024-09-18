@@ -4,9 +4,9 @@ package injection
 
 import (
 	"go/ast"
-	"go/token"
 	"strings"
 
+	"go/token"
 	"gosast/rules"
 )
 
@@ -31,7 +31,8 @@ func (r *SQLInjectionRule) Check(node ast.Node, filePath string) []rules.Violati
 				arg, ok := call.Args[0].(*ast.BasicLit)
 				if ok && arg.Kind == token.STRING {
 					query := arg.Value
-					if strings.Contains(strings.ToUpper(query), "SELECT") || strings.Contains(strings.ToUpper(query), "INSERT") {
+					upperQuery := strings.ToUpper(query)
+					if strings.Contains(upperQuery, "SELECT") || strings.Contains(upperQuery, "INSERT") {
 						violations = append(violations, rules.Violation{
 							File:     filePath,
 							Line:     int(arg.Pos()),

@@ -1,6 +1,6 @@
-// rules/xss/xss.go
+// rules/path_traversal/path_traversal.go
 
-package xss
+package path_traversal
 
 import (
 	"go/ast"
@@ -9,9 +9,9 @@ import (
 	"gosast/rules"
 )
 
-type XSSRule struct{}
+type PathTraversalRule struct{}
 
-func (r *XSSRule) Check(node ast.Node, filePath string) []rules.Violation {
+func (r *PathTraversalRule) Check(node ast.Node, filePath string) []rules.Violation {
 	var violations []rules.Violation
 
 	ast.Inspect(node, func(n ast.Node) bool {
@@ -25,12 +25,12 @@ func (r *XSSRule) Check(node ast.Node, filePath string) []rules.Violation {
 			return true
 		}
 
-		if selExpr.Sel.Name == "Execute" || selExpr.Sel.Name == "ExecuteTemplate" {
+		if selExpr.Sel.Name == "Join" && strings.Contains(getSource(node), "filepath.Join") {
 			if !containsSanitization(call) {
 				violations = append(violations, rules.Violation{
 					File:     filePath,
 					Line:     int(call.Pos()),
-					Message:  "HTML template execution without proper sanitization (XSS vulnerability)",
+					Message:  "Path joined without sanitization, potential path traversal.",
 					Severity: "high",
 				})
 			}
@@ -42,16 +42,16 @@ func (r *XSSRule) Check(node ast.Node, filePath string) []rules.Violation {
 	return violations
 }
 
-func (r *XSSRule) Name() string {
-	return "XSS"
+func (r *PathTraversalRule) Name() string {
+	return "PathTraversal"
 }
 
-func (r *XSSRule) Severity() string {
+func (r *PathTraversalRule) Severity() string {
 	return "high"
 }
 
 func containsSanitization(call *ast.CallExpr) bool {
-	// Simplistic check: looks for function calls with 'sanitize' in the argument names
+	// Simplistic check: looks for 'sanitizePath' in arguments
 	for _, arg := range call.Args {
 		if ident, ok := arg.(*ast.Ident); ok && strings.Contains(ident.Name, "sanitize") {
 			return true
@@ -60,6 +60,11 @@ func containsSanitization(call *ast.CallExpr) bool {
 	return false
 }
 
-func NewXSSRule() rules.Rule {
-	return &XSSRule{}
+func NewPathTraversalRule() rules.Rule {
+	return &PathTraversalRule{}
+}
+
+// Placeholder function: Implement proper source retrieval if needed
+func getSource(node ast.Node) string {
+	return ""
 }

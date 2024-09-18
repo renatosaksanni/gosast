@@ -1,0 +1,57 @@
+# .gitlab-ci.yml
+
+stages:
+  - build
+  - test
+  - lint
+  - security
+  - deploy
+
+variables:
+  GOSAST_VERSION: v1.0.0
+
+# Build Stage
+build:
+  stage: build
+  image: golang:1.20-alpine
+  script:
+    - go build -o gosast ./cmd/gosast
+  artifacts:
+    paths:
+      - gosast
+  only:
+    - branches
+
+# Test Stage
+test:
+  stage: test
+  image: golang:1.20-alpine
+  script:
+    - go test ./...
+  only:
+    - branches
+
+# Security Analysis Stage
+gosast_linter:
+  stage: security
+  image: registry.example.com/your-repo/gosast:${GOSAST_VERSION}
+  script:
+    - ./gosast --config ./config/.gosast.yml --format json --output sast-report.json
+  artifacts:
+    reports:
+      sast: sast-report.json
+    paths:
+      - sast-report.json
+  allow_failure: false
+  only:
+    - branches
+
+# Deployment Stage
+deploy:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - ./deploy.sh # Replace with your deployment script
+  only:
+    - main
+  when: manual

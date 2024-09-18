@@ -9,9 +9,10 @@ import (
 	"gosast/rules"
 )
 
-type AccessControlRule struct{}
+type BrokenAccessControlRule struct{}
 
-func (r *AccessControlRule) Check(node ast.Node, filePath string) []rules.Violation {
+// Check inspects the AST node for broken access control vulnerabilities.
+func (r *BrokenAccessControlRule) Check(node ast.Node, filePath string) []rules.Violation {
 	var violations []rules.Violation
 
 	ast.Inspect(node, func(n ast.Node) bool {
@@ -25,8 +26,8 @@ func (r *AccessControlRule) Check(node ast.Node, filePath string) []rules.Violat
 				violations = append(violations, rules.Violation{
 					File:     filePath,
 					Line:     int(funcDecl.Pos()),
-					Message:  "HTTP handler missing authorization middleware",
-					Severity: "high",
+					Message:  "HTTP handler missing authorization middleware.",
+					Severity: r.Severity(),
 				})
 			}
 		}
@@ -37,16 +38,16 @@ func (r *AccessControlRule) Check(node ast.Node, filePath string) []rules.Violat
 	return violations
 }
 
-func (r *AccessControlRule) Name() string {
-	return "AccessControl"
+func (r *BrokenAccessControlRule) Name() string {
+	return "BrokenAccessControl"
 }
 
-func (r *AccessControlRule) Severity() string {
+func (r *BrokenAccessControlRule) Severity() string {
 	return "high"
 }
 
+// hasAuthorizationMiddleware checks if the authorization middleware is used.
 func hasAuthorizationMiddleware(block *ast.BlockStmt) bool {
-	// Simplistic check; in real scenarios, analyze the AST for middleware usage
 	for _, stmt := range block.List {
 		exprStmt, ok := stmt.(*ast.ExprStmt)
 		if !ok {
@@ -74,6 +75,7 @@ func hasAuthorizationMiddleware(block *ast.BlockStmt) bool {
 	return false
 }
 
-func NewAccessControlRule() rules.Rule {
-	return &AccessControlRule{}
+// NewBrokenAccessControlRule creates a new instance of BrokenAccessControlRule.
+func NewBrokenAccessControlRule() rules.Rule {
+	return &BrokenAccessControlRule{}
 }
