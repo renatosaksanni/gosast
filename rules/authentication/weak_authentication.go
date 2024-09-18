@@ -11,6 +11,7 @@ import (
 
 type WeakAuthenticationRule struct{}
 
+// Check inspects the AST node for weak authentication mechanisms.
 func (r *WeakAuthenticationRule) Check(node ast.Node, filePath string) []rules.Violation {
 	var violations []rules.Violation
 
@@ -26,13 +27,12 @@ func (r *WeakAuthenticationRule) Check(node ast.Node, filePath string) []rules.V
 		}
 
 		if selExpr.Sel.Name == "GenerateFromPassword" {
-			// Check if bcrypt is used
 			if !usesBcrypt(call) {
 				violations = append(violations, rules.Violation{
 					File:     filePath,
 					Line:     int(call.Pos()),
-					Message:  "Password hashing is not using bcrypt",
-					Severity: "critical",
+					Message:  "Password hashing is not using bcrypt.",
+					Severity: r.Severity(),
 				})
 			}
 		}
@@ -51,8 +51,8 @@ func (r *WeakAuthenticationRule) Severity() string {
 	return "critical"
 }
 
+// usesBcrypt checks if bcrypt is used for password hashing.
 func usesBcrypt(call *ast.CallExpr) bool {
-	// Simplistic check; in real scenarios, analyze the import path and usage
 	for _, arg := range call.Args {
 		if ident, ok := arg.(*ast.Ident); ok && strings.Contains(ident.Name, "bcrypt") {
 			return true
@@ -61,6 +61,7 @@ func usesBcrypt(call *ast.CallExpr) bool {
 	return false
 }
 
+// NewWeakAuthenticationRule creates a new instance of WeakAuthenticationRule.
 func NewWeakAuthenticationRule() rules.Rule {
 	return &WeakAuthenticationRule{}
 }

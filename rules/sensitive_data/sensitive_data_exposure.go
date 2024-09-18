@@ -11,6 +11,7 @@ import (
 
 type SensitiveDataExposureRule struct{}
 
+// Check inspects the AST node for sensitive data exposure vulnerabilities.
 func (r *SensitiveDataExposureRule) Check(node ast.Node, filePath string) []rules.Violation {
 	var violations []rules.Violation
 
@@ -31,8 +32,8 @@ func (r *SensitiveDataExposureRule) Check(node ast.Node, filePath string) []rule
 					violations = append(violations, rules.Violation{
 						File:     filePath,
 						Line:     int(ident.Pos()),
-						Message:  "Sensitive data 'password' is being logged",
-						Severity: "high",
+						Message:  "Sensitive data 'password' is being logged.",
+						Severity: r.Severity(),
 					})
 				}
 			}
@@ -52,6 +53,7 @@ func (r *SensitiveDataExposureRule) Severity() string {
 	return "high"
 }
 
+// NewSensitiveDataExposureRule creates a new instance of SensitiveDataExposureRule.
 func NewSensitiveDataExposureRule() rules.Rule {
 	return &SensitiveDataExposureRule{}
 }
